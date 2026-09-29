@@ -1,122 +1,111 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext.jsx';
+import { ToastProvider } from './context/ToastContext.jsx';
+import { AppLayout } from './components/layout/AppLayout.jsx';
+import { PublicLayout } from './components/layout/PublicLayout.jsx';
+import { GuestOnly, RequireAdmin, RequireUser } from './components/layout/RouteGuards.jsx';
+import { Button, Card, Icon } from './components/ui/index.jsx';
+import { LandingPage } from './pages/public/LandingPage.jsx';
+import { AboutPage, HowItWorksPage } from './pages/public/InfoPages.jsx';
+import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/public/AuthPages.jsx';
+import { OnboardingPage } from './pages/app/OnboardingPage.jsx';
+import { DashboardPage } from './pages/app/DashboardPage.jsx';
+import { EditProfilePage, MyProfilePage } from './pages/app/ProfilePages.jsx';
+import { MySkillsPage } from './pages/app/MySkillsPage.jsx';
+import { FindPartnerPage, SearchPage } from './pages/app/DiscoverPages.jsx';
+import { UserProfilePage } from './pages/app/UserProfilePage.jsx';
+import { RequestsPage } from './pages/app/RequestsPage.jsx';
+import { SessionsPage } from './pages/app/SessionsPage.jsx';
+import { MessagesPage } from './pages/app/MessagesPage.jsx';
+import { NotificationsPage } from './pages/app/NotificationsPage.jsx';
+import { ReviewsPage } from './pages/app/ReviewsPage.jsx';
+import { SettingsPage } from './pages/app/SettingsPage.jsx';
+import { PointsPage } from './pages/app/PointsPage.jsx';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage.jsx';
+import { AdminUserDetailPage, AdminUsersPage } from './pages/admin/AdminUsersPage.jsx';
+import { AdminCategoriesPage, AdminSkillsPage } from './pages/admin/AdminCatalogPages.jsx';
+import { AdminReportsPage } from './pages/admin/AdminReportsPage.jsx';
+import { AdminReviewsPage } from './pages/admin/AdminReviewsPage.jsx';
+import { AdminPointsPage } from './pages/admin/AdminPointsPage.jsx';
+import { AdminActivityPage } from './pages/admin/AdminActivityPage.jsx';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function NotFoundPage() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <div className="auth-page">
+      <Card className="auth-card">
+        <span className="eyebrow">404</span>
+        <h1>Page not found</h1>
+        <p className="auth-card__lead">That link does not match any SkillSwap page. Check the address or head back home.</p>
+        <Button to="/" icon={<Icon name="home" size={16} />}>
+          Back to home
+        </Button>
+      </Card>
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <AuthProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/how-it-works" element={<HowItWorksPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+
+            <Route element={<GuestOnly />}>
+              <Route element={<PublicLayout />}>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+              </Route>
+            </Route>
+
+            <Route element={<RequireUser />}>
+              <Route element={<AppLayout />}>
+                <Route path="/app" element={<DashboardPage />} />
+                <Route path="/app/onboarding" element={<OnboardingPage />} />
+                <Route path="/app/profile" element={<MyProfilePage />} />
+                <Route path="/app/profile/edit" element={<EditProfilePage />} />
+                <Route path="/app/skills" element={<MySkillsPage />} />
+                <Route path="/app/find" element={<FindPartnerPage />} />
+                <Route path="/app/search" element={<SearchPage />} />
+                <Route path="/app/users/:id" element={<UserProfilePage />} />
+                <Route path="/app/requests" element={<RequestsPage />} />
+                <Route path="/app/sessions" element={<SessionsPage />} />
+                <Route path="/app/messages" element={<MessagesPage />} />
+                <Route path="/app/messages/:id" element={<MessagesPage />} />
+                <Route path="/app/notifications" element={<NotificationsPage />} />
+                <Route path="/app/reviews" element={<ReviewsPage />} />
+                <Route path="/app/settings" element={<SettingsPage />} />
+                <Route path="/app/points" element={<PointsPage />} />
+              </Route>
+            </Route>
+
+            <Route element={<RequireAdmin />}>
+              <Route element={<AppLayout admin />}>
+                <Route path="/admin" element={<AdminDashboardPage />} />
+                <Route path="/admin/users" element={<AdminUsersPage />} />
+                <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
+                <Route path="/admin/skills" element={<AdminSkillsPage />} />
+                <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+                <Route path="/admin/reports" element={<AdminReportsPage />} />
+                <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+                <Route path="/admin/points" element={<AdminPointsPage />} />
+                <Route path="/admin/activity" element={<AdminActivityPage />} />
+                <Route path="/admin/settings" element={<SettingsPage admin />} />
+              </Route>
+            </Route>
+
+            <Route path="/dashboard" element={<Navigate to="/app" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
+    </AuthProvider>
+  );
+}

@@ -57,11 +57,12 @@ export async function getMe(userId) {
   );
   const row = rows[0];
   if (!row) throw ApiError.notFound('User not found.');
-  const [card, wallet, unreadNotificationCount, unreadMessages] = await Promise.all([
+  const [card, wallet, unreadNotificationCount, unreadMessages, pendingReceived] = await Promise.all([
     findUserCard(userId),
     getWalletSummary(userId),
     unreadNotifications(userId),
     query('SELECT COUNT(*)::int AS count FROM messages WHERE receiver_id = $1 AND is_read = FALSE AND deleted_at IS NULL', [userId]),
+    query("SELECT COUNT(*)::int AS count FROM exchange_requests WHERE receiver_id = $1 AND status = 'PENDING'", [userId]),
   ]);
   return {
     id: row.id,
@@ -90,6 +91,7 @@ export async function getMe(userId) {
     wallet,
     unreadNotifications: unreadNotificationCount,
     unreadMessages: unreadMessages.rows[0].count,
+    pendingReceived: pendingReceived.rows[0].count,
   };
 }
 
