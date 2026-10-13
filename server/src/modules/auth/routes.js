@@ -12,6 +12,7 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  verifyOtpSchema,
 } from './schemas.js';
 
 const router = Router();
@@ -36,7 +37,17 @@ router.post(
   authLimiter,
   validate(loginSchema),
   asyncHandler(async (req, res) => {
-    const user = await auth.login(req.body);
+    const result = await auth.initiateLogin(req.body);
+    res.json(result);
+  }),
+);
+
+router.post(
+  '/verify-login-otp',
+  authLimiter,
+  validate(verifyOtpSchema),
+  asyncHandler(async (req, res) => {
+    const user = await auth.verifyLoginOtp(req.body);
     issueSession(res, user);
     res.json({ user: await getMe(user.id) });
   }),

@@ -61,3 +61,8 @@ export const changePasswordSchema = z
     message: 'Passwords do not match.',
     path: ['confirmPassword'],
   });
+  
+export const verifyOtpSchema = z.object({
+  email: emailSchema,
+  otp: z.string().length(6, 'Verification code must be 6 digits.'),
+});

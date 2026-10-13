@@ -8,6 +8,7 @@ export const authApi = {
   forgotPassword: (email) => http.post('/auth/forgot-password', { email }),
   resetPassword: (data) => http.post('/auth/reset-password', data),
   changePassword: (data) => http.post('/auth/change-password', data),
+  verifyLoginOtp: (data) => http.post('/auth/verify-login-otp', data),
 };
 
 export const usersApi = {

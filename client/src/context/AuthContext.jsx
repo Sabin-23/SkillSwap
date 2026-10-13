@@ -24,6 +24,11 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (credentials) => {
     const data = await authApi.login(credentials);
+    return data; // Returns { email, requireOtp: true }
+  }, []);
+
+  const verifyLoginOtp = useCallback(async (payload) => {
+    const data = await authApi.verifyLoginOtp(payload);
     setUser(data.user);
     return data.user;
   }, []);
@@ -43,8 +48,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refresh, setUser, isAdmin: user?.role === 'ADMIN' }),
-    [user, loading, login, register, logout, refresh],
+    () => ({
+      user,
+      loading,
+      login,
+      verifyLoginOtp,
+      register,
+      logout,
+      refresh,
+      setUser,
+      isAdmin: user?.role === 'ADMIN',
+    }),
+    [user, loading, login, verifyLoginOtp, register, logout, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

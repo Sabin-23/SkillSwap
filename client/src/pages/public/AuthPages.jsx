@@ -24,28 +24,49 @@ function useForm(initial) {
 }
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, verifyLoginOtp } = useAuth(); // 👈 Pull both methods from context
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const form = useForm({ email: '', password: '' });
+  const form = useForm({ email: '', password: '', otp: '' });
+  const [step, setStep] = useState(1); // Step 1: Email/Password, Step 2: OTP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   async function submit(event) {
     event.preventDefault();
     const errors = {};
-    if (!validateEmail(form.values.email)) errors.email = 'Enter a valid email address.';
-    if (!form.values.password) errors.password = 'Password is required.';
+    if (step === 1) {
+      if (!validateEmail(form.values.email)) errors.email = 'Enter a valid email address.';
+      if (!form.values.password) errors.password = 'Password is required.';
+    } else {
+      if (!form.values.otp || form.values.otp.length !== 6) errors.otp = 'Enter the 6-digit verification code.';
+    }
     form.setErrors(errors);
     if (Object.keys(errors).length) return;
+
     setLoading(true);
     setError(null);
+
     try {
-      const user = await login(form.values);
-      toast.success(`Welcome back, ${user.fullName.split(' ')[0]}!`);
-      const fallback = user.role === 'ADMIN' ? '/admin' : '/app';
-      navigate(location.state?.from && user.role !== 'ADMIN' ? location.state.from : fallback, { replace: true });
+      if (step === 1) {
+        // Phase 1: Send email & password -> triggers OTP email
+        const res = await login({ email: form.values.email, password: form.values.password });
+        if (res.requireOtp) {
+          setStep(2);
+          toast.success('Verification code sent to your email.');
+        }
+      } else {
+        // Phase 2: Verify OTP -> logs user in, sets context state, and returns user object
+        const user = await verifyLoginOtp({ email: form.values.email, otp: form.values.otp });
+        
+        toast.success(`Welcome back, ${user.fullName.split(' ')[0]}!`);
+        
+        // Clean redirection to dashboard or admin panel
+        const fallback = user.role === 'ADMIN' ? '/admin' : '/app';
+        const redirectTo = location.state?.from && user.role !== 'ADMIN' ? location.state.from : fallback;
+        navigate(redirectTo, { replace: true });
+      }
     } catch (err) {
       setError(err.message);
       form.setErrors(err.fields || {});
@@ -57,28 +78,36 @@ export function LoginPage() {
   return (
     <div className="auth-page">
       <Card className="auth-card">
-        <h1>Welcome back</h1>
-        <p className="auth-card__lead">Log in to continue your skill exchanges.</p>
+        <h1>{step === 1 ? 'Welcome back' : 'Enter Verification Code'}</h1>
+        <p className="auth-card__lead">
+          {step === 1 ? 'Log in to continue your skill exchanges.' : `We sent a 6-digit code to ${form.values.email}`}
+        </p>
         {error && (
           <div className="alert alert--danger mb-4" role="alert">
             <Icon name="alert" size={18} /> {error}
           </div>
         )}
         <form onSubmit={submit} className="stack" noValidate>
-          <Input label="Email" type="email" autoComplete="email" value={form.values.email} onChange={form.set('email')} error={form.errors.email} required />
-          <Input label="Password" type="password" autoComplete="current-password" value={form.values.password} onChange={form.set('password')} error={form.errors.password} required />
-          <div className="row row--between">
-            <Link to="/forgot-password" className="small">
-              Forgot password?
-            </Link>
-          </div>
+          {step === 1 ? (
+            <>
+              <Input label="Email" type="email" autoComplete="email" value={form.values.email} onChange={form.set('email')} error={form.errors.email} required />
+              <Input label="Password" type="password" autoComplete="current-password" value={form.values.password} onChange={form.set('password')} error={form.errors.password} required />
+              <div className="row row--between">
+                <Link to="/forgot-password" className="small">Forgot password?</Link>
+              </div>
+            </>
+          ) : (
+            <Input label="6-Digit OTP Code" type="text" maxLength={6} autoComplete="one-time-code" value={form.values.otp} onChange={form.set('otp')} error={form.errors.otp} required />
+          )}
           <Button type="submit" loading={loading} block size="lg">
-            Log in
+            {step === 1 ? 'Continue' : 'Verify & Log in'}
           </Button>
         </form>
-        <p className="auth-card__footer">
-          New to SkillSwap? <Link to="/register">Create an account</Link>
-        </p>
+        {step === 1 && (
+          <p className="auth-card__footer">
+            New to SkillSwap? <Link to="/register">Create an account</Link>
+          </p>
+        )}
       </Card>
     </div>
   );
@@ -176,13 +205,6 @@ export function ForgotPasswordPage() {
             <div className="alert alert--success" role="status">
               <Icon name="check" size={18} /> {result.message}
             </div>
-            {result.resetUrl && (
-              <div className="auth-demo">
-                <strong>Development mode:</strong> no email server is configured, so here is your reset link:
-                <br />
-                <Link to={result.resetUrl.replace(/^https?:\/\/[^/]+/, '')}>Open reset link</Link>
-              </div>
-            )}
             <Button to="/login" variant="outline" block>
               Back to log in
             </Button>

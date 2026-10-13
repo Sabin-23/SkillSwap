@@ -16,5 +16,8 @@
     "test": "npm --prefix server test && npm --prefix client test",
     "test:server": "npm --prefix server test",
     "test:client": "npm --prefix client test"
+  },
+  "dependencies": {
+    "nodemailer": "^10.1.0"
   }
 }

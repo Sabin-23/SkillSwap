@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { query, withTransaction } from '../../db/pool.js';
 import { env } from '../../config/env.js';
 import { ApiError } from '../../utils/errors.js';
-import { sendPasswordResetEmail } from '../../utils/mailer.js';
+import { sendPasswordResetEmail, sendOtpEmail } from '../../utils/mailer.js';
 import { ensureWallet, grantBonus } from '../points/pointsService.js';
 import { notify } from '../notifications/notificationService.js';
 
@@ -59,9 +59,9 @@ export async function register({ fullName, email, password }) {
   return publicUser(user);
 }
 
-export async function login({ email, password }) {
+export async function initiateLogin({ email, password }) {
   const { rows } = await query(
-    'SELECT id, full_name, email, role, status, password_hash, created_at FROM users WHERE email = $1',
+    'SELECT id, full_name, email, role, status, password_hash, created_at FROM users WHERE email = \$1',
     [email],
   );
   const user = rows[0];
@@ -70,7 +70,44 @@ export async function login({ email, password }) {
   if (user.status !== 'ACTIVE') {
     throw ApiError.forbidden('Your account has been suspended. Please contact support.');
   }
-  await query('UPDATE users SET last_login_at = NOW() WHERE id = $1', [user.id]);
+
+  // Generate a random 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // Invalidate any existing unused OTPs for this user
+  await query('UPDATE login_otps SET used_at = NOW() WHERE user_id = \$1 AND used_at IS NULL', [user.id]);
+  
+  // Store new hashed OTP (expires in 10 minutes)
+  await query(
+    'INSERT INTO login_otps (user_id, otp_hash, expires_at) VALUES (\$1, \$2, \$3)',
+    [user.id, hashToken(otp), new Date(Date.now() + 10 * 60 * 1000)],
+  );
+
+  await sendOtpEmail(user.email, otp);
+  
+  return { email: user.email, requireOtp: true };
+}
+export async function verifyLoginOtp({ email, otp }) {
+  const { rows: userRows } = await query(
+    'SELECT id, full_name, email, role, status, created_at FROM users WHERE email = \$1',
+    [email],
+  );
+  const user = userRows[0];
+  if (!user) throw ApiError.unauthorized('Invalid login attempt.');
+
+  const { rows: otpRows } = await query(
+    `SELECT id FROM login_otps
+     WHERE user_id = $1 AND otp_hash = $2 AND used_at IS NULL AND expires_at > NOW()`,
+    [user.id, hashToken(otp)],
+  );
+  const record = otpRows[0];
+  if (!record) throw ApiError.badRequest('Invalid or expired verification code.');
+
+  await withTransaction(async (client) => {
+    await client.query('UPDATE login_otps SET used_at = NOW() WHERE id = \$1', [record.id]);
+    await client.query('UPDATE users SET last_login_at = NOW() WHERE id = \$1', [user.id]);
+  });
+
   return publicUser(user);
 }
 
