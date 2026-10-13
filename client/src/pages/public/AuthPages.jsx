@@ -79,9 +79,6 @@ export function LoginPage() {
         <p className="auth-card__footer">
           New to SkillSwap? <Link to="/register">Create an account</Link>
         </p>
-        <div className="auth-demo">
-          <strong>Demo accounts</strong> (development seed): <code>amina@skillswap.dev</code>, <code>david@skillswap.dev</code>, admin <code>admin@skillswap.dev</code> — password <code>Password123</code>
-        </div>
       </Card>
     </div>
   );
